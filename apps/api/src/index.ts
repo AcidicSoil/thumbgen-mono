@@ -40,7 +40,7 @@ app.post("/api/generate", upload.array("images", 10), async (req, res) => {
       dataUrl: `data:image/png;base64,${v.buffer.toString("base64")}`
     }));
     res.json({ ok: true, preview: base64, variants });
-  } catch (e:any) {
+  } catch (e:unknown) {
     res.status(500).json({ ok:false, error: e?.message || "failed" });
   }
 });

@@ -1,4 +1,4 @@
-import sharp, { Sharp } from "sharp";
+import sharp from "sharp";
 
 export type Size = { width: number; height: number };
 export type UploadedImage = { id: string; buffer: Buffer; filename: string; kind?: 'photo'|'logo'|'background' };

@@ -43,7 +43,7 @@ function parseSize(v: string): Size | undefined {
 
 export async function main() {
   const argv = await buildParser().parseAsync();
-  if ((argv as any).help) return;
+  if (argv.help) return;
   const inDir = argv.input as string;
   const title = argv.title as string;
   const outDir = (argv.out as string | undefined) || inDir;
