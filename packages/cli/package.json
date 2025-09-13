@@ -7,7 +7,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "node --import tsx --test ./src/index.test.ts"
+    "test": "vitest"
   },
   "dependencies": {
     "@thumbgen/imaging": "file:../imaging",
@@ -16,6 +16,7 @@
   "devDependencies": {
     "typescript": "^5.4.0",
     "tsx": "^4.7.0",
-    "@types/node": "^20.11.30"
+    "@types/node": "^20.11.30",
+    "vitest": "^1.6.0"
   }
 }
