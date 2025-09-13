@@ -1,11 +1,61 @@
 #!/usr/bin/env node
 import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { generateThumbnail, UploadedImage } from "@thumbgen/imaging";
+import { pathToFileURL } from "node:url";
+import yargs from "yargs";
+import { hideBin } from "yargs/helpers";
+import type { UploadedImage, Size } from "@thumbgen/imaging";
 
-async function main() {
-  const inDir = process.argv[2] || ".";
-  const title = process.argv.slice(3).join(" ") || "Sample — CLI";
+export function buildParser(args = hideBin(process.argv)) {
+  return yargs(args)
+    .scriptName("thumbgen")
+    .usage("$0 [options]")
+    .option("input", {
+      alias: "i",
+      type: "string",
+      describe: "Source directory",
+      default: ".",
+    })
+    .option("title", {
+      alias: "t",
+      type: "string",
+      describe: "Thumbnail title",
+      default: "Sample — CLI",
+    })
+    .option("out", {
+      alias: "o",
+      type: "string",
+      describe: "Output directory (defaults to input)",
+    })
+    .option("size", {
+      type: "string",
+      array: true,
+      describe: "Additional variant size WIDTHxHEIGHT (repeatable)",
+    })
+    .help()
+    .exitProcess(false);
+}
+
+function parseSize(v: string): Size | undefined {
+  const m = /^(\d+)x(\d+)$/.exec(v);
+  return m ? { width: Number(m[1]), height: Number(m[2]) } : undefined;
+}
+
+export async function main() {
+  const argv = await buildParser().parseAsync();
+  if ((argv as any).help) return;
+  const inDir = argv.input as string;
+  const title = argv.title as string;
+  const outDir = (argv.out as string | undefined) || inDir;
+  const extraSizes = ((argv.size as string[] | undefined) || [])
+    .map(parseSize)
+    .filter((s): s is Size => !!s);
+  const defaultSizes: Size[] = [
+    { width: 1080, height: 1080 },
+    { width: 1080, height: 1920 },
+  ];
+  const sizes = defaultSizes.concat(extraSizes);
+
   const fs = await import("node:fs/promises");
   const entries = await fs.readdir(inDir, { withFileTypes: true });
   const imgs: UploadedImage[] = [];
@@ -16,15 +66,18 @@ async function main() {
     imgs.push({ id: e.name, buffer: buf, filename: e.name });
   }
   if (imgs.length === 0) throw new Error("No images found in " + inDir);
-  const res = await generateThumbnail(imgs, { title });
-  await writeFile(resolve(inDir, "thumb_1280x720.png"), res.base);
+  const { generateThumbnail } = await import("@thumbgen/imaging");
+  const res = await generateThumbnail(imgs, { title, sizes });
+  await writeFile(resolve(outDir, "thumb_1280x720.png"), res.base);
   for (const v of res.variants) {
-    await writeFile(resolve(inDir, `thumb_${v.size.width}x${v.size.height}.png`), v.buffer);
+    await writeFile(resolve(outDir, `thumb_${v.size.width}x${v.size.height}.png`), v.buffer);
   }
-  console.log("Saved thumbnails to", inDir);
+  console.log("Saved thumbnails to", outDir);
 }
 
-main().catch(err => {
-  console.error(err);
-  process.exit(1);
-});
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch(err => {
+    console.error(err);
+    process.exit(1);
+  });
+}
