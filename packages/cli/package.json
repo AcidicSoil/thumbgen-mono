@@ -1,0 +1,17 @@
+{
+  "name": "@thumbgen/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "thumbgen": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@thumbgen/imaging": "0.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}

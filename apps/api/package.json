@@ -1,0 +1,21 @@
+{
+  "name": "thumbgen-api",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1",
+    "@thumbgen/imaging": "0.1.0",
+    "zod": "^3.23.8",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "tsx": "^4.7.0",
+    "typescript": "^5.4.0"
+  }
+}
