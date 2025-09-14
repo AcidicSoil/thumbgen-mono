@@ -35,7 +35,8 @@ app.post("/api/generate", upload.array("images", 10), async (req, res) => {
         res.json({ ok: true, preview: base64, variants });
     }
     catch (e) {
-        res.status(500).json({ ok: false, error: e?.message || "failed" });
+        const message = e instanceof Error ? e.message : "failed";
+        res.status(500).json({ ok: false, error: message });
     }
 });
 if (process.env.NODE_ENV !== "test") {

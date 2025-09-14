@@ -8,6 +8,8 @@
     "declaration": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "outDir": "dist"
+    "outDir": "dist",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
   }
 }

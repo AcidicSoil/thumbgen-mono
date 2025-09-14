@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import multer from "multer";
 import { z } from "zod";
+import type { Express, Request, Response } from "express";
 import { generateThumbnail, UploadedImage } from "@thumbgen/imaging";
 
 export const app = express();
@@ -9,7 +10,7 @@ const upload = multer({ limits: { fileSize: 25 * 1024 * 1024 } });
 app.use(cors());
 app.use(express.json());
 
-app.get("/", (_req, res) => res.json({ ok: true, name: "thumbgen-api" }));
+app.get("/", (_req: Request, res: Response) => res.json({ ok: true, name: "thumbgen-api" }));
 
 const BodySchema = z.object({
   title: z.string().min(1)
@@ -17,7 +18,7 @@ const BodySchema = z.object({
 
 const FilesSchema = z.array(z.any()).min(1).max(10);
 
-app.post("/api/generate", upload.array("images", 10), async (req, res) => {
+app.post("/api/generate", upload.array("images", 10), async (req: Request, res: Response) => {
   const bodyResult = BodySchema.safeParse(req.body);
   const fileResult = FilesSchema.safeParse(req.files);
 
@@ -40,8 +41,9 @@ app.post("/api/generate", upload.array("images", 10), async (req, res) => {
       dataUrl: `data:image/png;base64,${v.buffer.toString("base64")}`
     }));
     res.json({ ok: true, preview: base64, variants });
-  } catch (e:unknown) {
-    res.status(500).json({ ok:false, error: e?.message || "failed" });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "failed";
+    res.status(500).json({ ok: false, error: message });
   }
 });
 
