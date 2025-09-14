@@ -1,0 +1,141 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Enhance File Upload and Create File List UI",
+        "description": "Develop the UI for file handling. Implement a drag-and-drop zone, a file picker button, and a list to display uploaded files. Each item in the list should show a thumbnail preview, file name, size, and a status indicator.",
+        "details": "Build upon the existing placeholder dropzone component in `packages/web/src/components/`. Use `shadcn/ui` components like `Card` for the list items. For each dropped/selected file, create a `FileItem` object as defined in the system design and update the Zustand store. Generate local preview URLs using `URL.createObjectURL()` for the thumbnails. Handle basic file type validation (JPG, PNG, WebP) on the client side.",
+        "testStrategy": "Manually test by dragging and dropping single and multiple files. Verify that the file list populates correctly with previews and metadata. Test with invalid file types (e.g., .txt, .svg) to ensure they are rejected with a user-friendly message. Check that the Zustand store state reflects the UI.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "todo",
+        "subtasks": []
+      },
+      {
+        "id": 2,
+        "title": "Build Output Settings Panel UI",
+        "description": "Create the UI panel where users can configure all output settings before generation. This includes presets, custom dimensions, crop mode, output format, quality, and file naming options.",
+        "details": "Using `shadcn/ui`, implement the settings panel. Use `Select` for presets, crop mode, and format. Use `Input` for custom dimensions and the naming pattern. Use a `Slider` for quality (1-100). Use a `Switch` or `Checkbox` for 'strip metadata' and 'lock aspect ratio'. All these controls should read from and write to the settings slice of the Zustand store.",
+        "testStrategy": "Verify that all UI controls are present and functional. Change each setting and confirm that the Zustand store is updated accordingly. Ensure the 'lock aspect ratio' checkbox correctly disables one of the dimension inputs when checked. Test that the preset dropdown populates the width/height fields.",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "todo",
+        "subtasks": []
+      },
+      {
+        "id": 3,
+        "title": "Setup Web Worker and Communication Channel",
+        "description": "Configure the `packages/worker` module and establish a communication bridge between the main thread (React app) and the web worker.",
+        "details": "In the `packages/worker` package, install necessary dependencies like `pica`, `exifr`. Create the main worker script (`process.ts`). In the `packages/web` app, create a service or hook to instantiate the worker. Implement a message-passing system: the main thread will post a 'process' message with the file and settings, and the worker will post back 'progress', 'done', or 'error' messages.",
+        "testStrategy": "Create a simple test case where the main thread sends a message (e.g., a string) to the worker, the worker transforms it (e.g., makes it uppercase), and sends it back. Verify the main thread receives the transformed message. This confirms the communication channel is working before adding complex image logic.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "todo",
+        "subtasks": []
+      },
+      {
+        "id": 4,
+        "title": "Implement Core Image Processing in Worker",
+        "description": "Implement the image processing logic inside the web worker, including EXIF orientation fixing, resizing, and encoding.",
+        "details": "Within the worker's message handler, use `exifr` to read EXIF data and determine the correct orientation. Decode the image into a bitmap. Use `pica` for high-quality resizing based on the provided dimensions and crop mode (start with 'cover'). Encode the resized image into the target format (JPG, PNG, WebP) at the specified quality. The result should be a `Blob`.",
+        "testStrategy": "Write unit tests within the worker context if possible, or test by sending a specific image file and settings from the main app. Verify the output blob has the correct dimensions and mime type. Manually inspect a downloaded processed image to check its quality and orientation.",
+        "priority": "high",
+        "dependencies": [
+          3
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 5,
+        "title": "Integrate Processing Flow and UI Updates",
+        "description": "Connect the UI to the worker to start the generation process and display real-time progress for each file and for the overall batch.",
+        "details": "Implement the 'Generate' button's `onClick` handler. It should iterate through the files in the Zustand store, sending a 'process' message to the worker for each file/preset combination. Listen for messages from the worker. On 'progress', update the corresponding file's progress bar in the UI. On 'done', update the file's status to 'Completed' and store the resulting Blob. On 'error', update the status to 'Failed'.",
+        "testStrategy": "Process a batch of 5-10 images. Verify that progress bars update individually. Check that the overall progress bar reflects the total completion status. Ensure that if one file fails, the others continue to process. Verify the final state in the UI and Zustand store is accurate.",
+        "priority": "high",
+        "dependencies": [
+          1,
+          2,
+          4
+        ],
+        "status": "todo",
+        "subtasks": []
+      },
+      {
+        "id": 6,
+        "title": "Implement ZIP Export Functionality",
+        "description": "Package all generated images into a single ZIP file for download, using a user-defined naming convention.",
+        "details": "After all processing is complete, enable a 'Download ZIP' button. When clicked, use the `jszip` library to create a new ZIP archive. Iterate through the successfully processed outputs stored in the Zustand store. For each output, generate a filename using the tokenized naming pattern (e.g., `{basename}-{width}x{height}.{ext}`). Add the image `Blob` to the ZIP file with its new name. Generate the ZIP blob asynchronously.",
+        "testStrategy": "Generate thumbnails for several images with multiple presets. Click 'Download ZIP'. Unzip the downloaded file and verify that it contains all the expected images. Check that filenames match the specified pattern. For example, `my-photo-1920x1080.jpg` and `my-photo-1024x1024.jpg`.",
+        "priority": "medium",
+        "dependencies": [
+          5
+        ],
+        "status": "todo",
+        "subtasks": []
+      },
+      {
+        "id": 7,
+        "title": "Implement Download and Error Handling",
+        "description": "Add functionality to download the generated ZIP file and individual images. Implement robust error handling and display clear messages to the user.",
+        "details": "Use the `file-saver` library to trigger the download of the generated ZIP blob. Add individual download buttons for each successfully generated thumbnail in the file list. Enhance the worker and main thread to handle processing errors (e.g., corrupted image, out of memory). Display a clear error message next to the failed file in the UI, with an option to retry.",
+        "testStrategy": "Test the 'Download ZIP' button. Test individual download buttons. Attempt to process a corrupted image file and verify that a specific error is shown for that file while others succeed. Check that the UI remains responsive and does not crash on error.",
+        "priority": "medium",
+        "dependencies": [
+          6
+        ],
+        "status": "todo",
+        "subtasks": []
+      },
+      {
+        "id": 8,
+        "title": "Implement Remaining Crop Modes",
+        "description": "Implement the 'contain', 'fit', 'fill', and 'letterbox' crop modes in the image processing worker.",
+        "details": "Extend the `pica` resizing logic in the worker. Based on the `cropMode` setting, calculate the correct source and destination dimensions. 'Contain' may require adding padding (letterboxing/pillarboxing) to the canvas before drawing the resized image to maintain the aspect ratio within the target dimensions. 'Fill' and 'fit' are variations of scaling that `pica` can handle with correct configuration.",
+        "testStrategy": "Process a single non-square image with various aspect ratio presets (e.g., 16:9, 1:1, 4:5). For each preset, cycle through all crop modes. Manually inspect the output for each combination to ensure the cropping and scaling behavior is correct (e.g., 'contain' has bars, 'cover' fills the frame and crops).",
+        "priority": "medium",
+        "dependencies": [
+          4
+        ],
+        "status": "todo",
+        "subtasks": []
+      },
+      {
+        "id": 9,
+        "title": "Persist Settings to localStorage",
+        "description": "Automatically save the user's output settings to localStorage and load them when the app starts.",
+        "details": "Create a Zustand middleware that subscribes to changes in the settings slice of the store. Whenever the settings change, serialize them to a JSON string and save it to `localStorage`. When the application first loads, check if settings exist in `localStorage`, parse them, and use them to hydrate the initial state of the store.",
+        "testStrategy": "Change several settings (e.g., quality to 85, format to WebP). Refresh the page. Verify that the settings UI loads with the previously selected values (85 quality, WebP format). Clear localStorage and refresh again to ensure the app loads with default settings.",
+        "priority": "low",
+        "dependencies": [
+          2
+        ],
+        "status": "todo",
+        "subtasks": []
+      },
+      {
+        "id": 10,
+        "title": "Implement Accessibility (A11y) Features",
+        "description": "Ensure the application is fully keyboard-operable and accessible to screen reader users, meeting WCAG 2.1 AA standards.",
+        "details": "Review all interactive elements. Ensure buttons, inputs, and file list items are focusable and have clear focus indicators. Add appropriate ARIA labels and roles (e.g., `aria-label` for icon-only buttons, `role=\"status\"` for progress announcements). Ensure the entire UX flow, from uploading files to downloading the ZIP, can be completed using only a keyboard.",
+        "testStrategy": "Perform a full keyboard-only navigation test: use Tab, Shift+Tab, Enter, and Space to operate every feature. Use a screen reader (e.g., NVDA, VoiceOver) to navigate the application and verify that all controls are announced correctly and that status updates (e.g., 'Processing complete') are read aloud.",
+        "priority": "medium",
+        "dependencies": [
+          1,
+          2,
+          7
+        ],
+        "status": "pending",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-09-14T00:29:38.105Z",
+      "updated": "2025-09-14T00:33:54.362Z",
+      "description": "Tasks for master context"
+    }
+  }
+}

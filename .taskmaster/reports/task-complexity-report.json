@@ -1,0 +1,29 @@
+{
+	"meta": {
+		"generatedAt": "2025-09-14T00:34:31.948Z",
+		"tasksAnalyzed": 2,
+		"totalTasks": 10,
+		"analysisCount": 2,
+		"thresholdScore": 5,
+		"projectName": "Taskmaster",
+		"usedResearch": false
+	},
+	"complexityAnalysis": [
+		{
+			"taskId": 4,
+			"taskTitle": "Implement Core Image Processing in Worker",
+			"complexityScore": 8,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Based on the analysis of `packages/worker/src/process.worker.ts`, the core processing logic is not yet implemented. Break this task down into the following subtasks: 1. **Decode Image and Apply EXIF Orientation**: Read the image file, use `exifr` to get orientation, decode the image to a bitmap, and create an intermediate canvas that correctly orients the image. 2. **Implement 'Cover' Mode Resizing**: Using the oriented image canvas as a source, use `pica` to resize it to the target dimensions according to the 'cover' crop mode logic. 3. **Encode to Target Format and Return Blob**: Draw the resized image onto a final canvas, then use `canvas.toBlob()` to encode it into the specified format (JPG/PNG/WebP) and quality. The final `Blob` should be returned in the worker's 'done' message.",
+			"reasoning": "Code analysis of `packages/worker/src/process.worker.ts` confirms it is a skeleton file with only a basic message handler. The entire image processing pipeline is greenfield development. The complexity score of 8 is justified because this task requires integrating three distinct and complex stages: 1) Asynchronously parsing EXIF data with `exifr` and correctly applying orientation transforms to a canvas, which is non-trivial. 2) Using `pica` to perform high-quality resizing. 3) Encoding the final canvas to a `Blob` with variable formats and quality settings. This is the core, most computationally intensive logic of the application."
+		},
+		{
+			"taskId": 10,
+			"taskTitle": "Implement Accessibility (A11y) Features",
+			"complexityScore": 5,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Code analysis shows a good a11y foundation from `shadcn/ui`, but application-wide features are missing. Expand this task into the following subtasks: 1. **Audit and Implement Keyboard Navigation & Focus**: Review the entire tab order of the application. Ensure all interactive elements (buttons, inputs, file list items) are focusable with clear `:focus-visible` styles. Implement keyboard activation (Enter/Space) where necessary. 2. **Add ARIA Attributes for Dynamic Content**: Add `aria-label`s to all remaining icon-only buttons. Implement an `aria-live` region (e.g., using `role=\"status\"`) to announce overall progress, completion, and error messages to screen reader users. 3. **Conduct Full Screen Reader Test**: Perform a comprehensive test using NVDA or VoiceOver to navigate the entire user flow, from file upload to download. Identify and fix any issues with announcements, roles, or component states.",
+			"reasoning": "Code analysis reveals that the project's use of `shadcn/ui` provides a strong accessibility foundation for individual components, as seen in `settings-panel.tsx`. However, a `grep` for `role=\"status\"` or `aria-live` returns no results, indicating that dynamic announcements for processing status are completely missing. Furthermore, while some icon buttons have `aria-label`s, a full audit is needed. The complexity is moderate (5/10) because it's not a greenfield implementation but a cross-cutting task requiring auditing and enhancing multiple components, with a specific focus on implementing the missing live regions and ensuring a logical keyboard flow across the entire application."
+		}
+	]
+}
