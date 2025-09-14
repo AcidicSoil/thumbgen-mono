@@ -33,4 +33,20 @@ describe('imaging', () => {
     expect(sizes).toContainEqual({ width: 1080, height: 1080 });
     expect(sizes).toContainEqual({ width: 1080, height: 1920 });
   });
+
+  it('fills variant backgrounds with gradient colors', async () => {
+    const subject: UploadedImage = { id: 's', filename: 's.png', buffer: await colorImage(200, 100, 50, 300) };
+    const logo: UploadedImage = { id: 'l', filename: 'l.png', buffer: await colorImage(10, 20, 30, 40) };
+    const pal = await extractPalette(subject.buffer);
+    const res = await generateThumbnail([subject, logo]);
+    const variant = res.variants.find((v) => v.size.width === 1080 && v.size.height === 1080)!;
+    const pixel = await sharp(variant.buffer)
+      .extract({ left: 0, top: 0, width: 1, height: 1 })
+      .raw()
+      .toBuffer();
+    const [r, g, b] = [pal.dominant.slice(1, 3), pal.dominant.slice(3, 5), pal.dominant.slice(5, 7)].map((h) => parseInt(h, 16));
+    expect(Math.abs(pixel[0] - r)).toBeLessThan(5);
+    expect(Math.abs(pixel[1] - g)).toBeLessThan(5);
+    expect(Math.abs(pixel[2] - b)).toBeLessThan(5);
+  });
 });

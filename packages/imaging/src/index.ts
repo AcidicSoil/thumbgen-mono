@@ -144,10 +144,25 @@ export async function generateThumbnail(images: UploadedImage[], opts: GenerateO
     { width: 1080, height: 1080 },
     { width: 1080, height: 1920 }
   ];
-  const variants = await Promise.all(sizes.map(async s => ({
-    size: s,
-    buffer: await sharp(baseBuf).resize({ width: s.width, height: s.height, fit: "cover", position: "attention" }).png().toBuffer()
-  })));
+  const variants = await Promise.all(
+    sizes.map(async (s) => {
+      // Create gradient background for the variant size
+      const bg = sharp(gradientSVG(s, pal.dominant, pal.accent)).png();
+      // Resize the base thumbnail to fit within the variant without cropping
+      const fitted = await sharp(baseBuf)
+        .resize({ width: s.width, height: s.height, fit: "inside" })
+        .png()
+        .toBuffer();
+      const meta = await sharp(fitted).metadata();
+      const left = Math.floor((s.width - (meta.width || 0)) / 2);
+      const top = Math.floor((s.height - (meta.height || 0)) / 2);
+      const buffer = await bg
+        .composite([{ input: fitted, left, top }])
+        .png()
+        .toBuffer();
+      return { size: s, buffer };
+    })
+  );
 
   return { base: baseBuf, variants };
 }
