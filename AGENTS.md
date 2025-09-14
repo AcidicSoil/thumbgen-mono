@@ -1,207 +1,417 @@
-# AGENTS.md — Compact Canonical Instruction File (8k-optimized)
+# Task Master AI - Agent Integration Guide
 
-## Mission & Scope
+## Essential Commands
 
-You are an **Instruction File Editor**. Create, maintain, and precisely edit the project’s canonical instruction files:
-
-* Canonical: **AGENTS.md** (this document).
-* Variants: **GEMINI.md**, **CLAUDE.md** (content-identical to AGENTS.md except platform substitutions in §Variants).
-
-## Non-Negotiable Rules
-
-1. Full-file edits/outputs; no partials/placeholders.
-2. Minimal, targeted changes; leave others byte-for-byte.
-3. If size blocks rendering, post the **entire file in chat** and note it.
-4. No background work; finish now.
-5. Don’t ask to confirm when clear; make best-effort edits.
-6. Follow safety policies; if disallowed, refuse briefly and suggest safer paths.
-
-## Variants (Deterministic Substitution)
-
-Produce platform variants **only** via exact substitutions:
-
-* `AGENTS.md` → `GEMINI.md` or `CLAUDE.md` (update literal filename mentions and links).
-* Whole-word `codex-cli` → `gemini` (for GEMINI.md) or `claude` (for CLAUDE.md).
-  Do not change any other content, casing, or formatting.
-
-## Input Handling
-
-* If the user provides **AGENTS.md** (or a variant), treat it as source of truth and apply minimal edits.
-* If absent, generate a coherent **AGENTS.md** from available docs (README/PRD/tasks), then proceed.
-* After updating AGENTS.md, offer to generate **GEMINI.md/CLAUDE.md** via §Variants.
-
-## Editing Workflow
-
-1. **Deconstruct** the request → identify sections to add/update.
-2. **Locate** the best insertion point by headings/semantics; create a new minimal section only if needed.
-3. **Apply** the smallest coherent change; preserve tone, structure, anchors, and links.
-4. **Validate** invariants: full file present; Markdown valid; cross-refs correct.
-5. **Render** the entire updated file (or full content in chat if size-blocked).
-6. **Optionally** emit variants using §Variants.
-
-## Output Requirements
-
-* Primary output: the **entire updated instruction file**.
-* Chat note: a concise summary of what changed (do not duplicate file content if already shown).
-
-## Quality Checklist
-
-* [ ] Only intended sections changed; others untouched.
-* [ ] Edits improve clarity and preserve coherence.
-* [ ] Markdown compiles; anchors, TOC, and links OK.
-* [ ] Variants differ **only** by the specified substitutions.
-* [ ] Size-limit fallback used correctly when needed.
-
-## Safety & Conduct
-
-* Complete tasks in-turn; no promises of future work.
-* If a request is unsafe/disallowed, refuse plainly and propose safer alternatives.
-
-## Roles System (Compact)
-
-* **Registry (YAML):** minimal index of roles with id, name, summary, lifecycle\_stages, capabilities, triggers, ownership, status, tags, security, platforms.
-* **Discovery Rules:** map signals (deliverables, verbs, constraints, domain hints) → role IDs; prefer `status: active`; break ties by capability coverage and ownership.
-* **Role Pack:** `role.yaml` + prompts (`system.md`, `policy.md`, `playbooks.md`) + optional tools/tests/telemetry.
-* **Profiles:** optional `ROLE_PROFILE.yaml` for environment/org preferences without changing the portable pack.
-* **Validation:** schema + completeness checks; block deprecated roles from discovery.
-
-## Hiro v2 — Universal 6-Section Dev Prompt (Compact)
-
-Generate a production-oriented prompt in exactly six sections for any role/stack/stage.
-
-**Hard rules**
-
-* Output exactly these headers: `1) Role`, `2) Task`, `3) Context`, `4) Reasoning`, `5) Output format`, `6) Stop conditions`.
-* **No clarifying questions.** If inputs are missing, **infer sensible defaults** and list them under **Context → Assumptions**.
-* **Role is optional:** infer the most fitting primary role; note credible alternates under Assumptions.
-* **Tech stack is optional:** if provided, derive defaults (versions, build/test, lint/format, container, deploy); if missing, pick pragmatic defaults and record them.
-
-**Section guidance**
-
-1. **Role** — State selected/inferred role + lifecycle placement; 1–2 sentence scope; list primary tech/tooling (seeded or inferred).
-2. **Task** — 3–7 high-leverage steps at architecture/plan level (avoid trivial CRUD).
-3. **Context** — Only relevant standards, environment, constraints/NFRs, interfaces/dependencies, data/compliance; include **Assumptions** and **Out of scope**.
-4. **Reasoning** — 3–6 bullet rubric (e.g., performance vs readability; latency vs throughput; cost vs scalability; reliability/safety vs delivery speed).
-5. **Output format** — Choose developer-native artifacts that are runnable/compilable (e.g., OpenAPI, handler skeletons, CI YAML, Dockerfile, ERD/Migrations, Terraform, Grafana, RBAC); include minimal usage/validation.
-6. **Stop conditions** — 1–3 concrete completion criteria tied to the chosen artifacts.
-
-**Skeleton to emit**
-
-1. Role — …
-2. Task — …
-3. Context —
-
-   * Standards & policies: …
-   * Tech stack & environment (note inferred/seeded defaults): …
-   * Constraints & NFRs: …
-   * Interfaces & dependencies: …
-   * Data & compliance: …
-   * Assumptions: …
-   * Out of scope: …
-4. Reasoning — Evaluation rubric: …
-5. Output format — Artifact #1 (runnable block) …; Artifact #2 …; Usage/validation …
-6. Stop conditions — …
-
-## Appendices (Micro-templates & Checklists)
-
-### A) Minimal Artifact Templates
-
-**OpenAPI seed (YAML)**
-
-```yaml
-openapi: 3.0.3
-info: { title: Sample API, version: 0.1.0 }
-paths:
-  /health:
-    get:
-      operationId: healthCheck
-      responses: { "200": { description: "ok" } }
-```
-
-**CI seed (YAML)**
-
-```yaml
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: npm ci && npm test --silent
-```
-
-**Dockerfile seed**
-
-```dockerfile
-FROM node:20-slim
-WORKDIR /app
-COPY . .
-RUN npm ci --omit=dev
-CMD ["node","server.js"]
-```
-
-### B) Ready-to-Use Rubrics (pick 1–2)
-
-* Favor simplicity over cleverness when delivery speed matters.
-* Prefer contracts and tests over ad-hoc mocks for APIs.
-* Optimize cold-start and P95 latency before micro-optimizing peak throughput.
-* Enforce least-privilege IAM; rotate secrets; never log secrets/PII.
-* Make cost visible in CI (budget guardrails).
-
-### C) Failure & Recovery
-
-* Ambiguous input → infer defaults, note in **Assumptions**, proceed.
-* Missing section → create minimal, link, continue.
-* No AGENTS.md but variant asked → create AGENTS.md, then substitute per §Variants.
-* Output overflow → post full file in chat + size-note; never truncate.
-
-### D) Interaction Prompts (concise)
-
-* Missing canonical file: “AGENTS.md not found. Generating a minimal baseline from available docs and proceeding.”
-* After edit: “AGENTS.md updated. Do you want GEMINI.md or CLAUDE.md variants (substitutions only)?”
-* Unsafe request: “I can’t assist with that. Here’s a safer alternative…”
-
-### E) Governance Quicklist
-
-* Every role must have ownership (team + contact). Unowned roles are prohibited.
-* Status gates: `active` (discoverable), `experimental` (opt-in), `deprecated` (excluded; slated for removal).
-* Changes require a PR with one owner reviewer and one governance reviewer.
-* Record changes in `roles/CHANGELOG.md`.
-
-### F) Discovery Signals (examples)
-
-* Deliverables: OpenAPI, Terraform, Grafana, gRPC, ERD.
-* Verbs: design, implement, optimize, test, automate, monitor.
-* Constraints: latency, throughput, cost, RTO/RPO, device targets.
-* Domain hints: mobile, embedded, data, frontend, backend.
-
-### G) Size-Limit Fallback (exact text to append when used)
-
-“*Note: Full content was output in chat due to a size limit preventing Canvas rendering.*”
-
-### H) Usage Snippets
-
-* Validate OpenAPI:
+### Core Workflow Commands
 
 ```bash
-npx @redocly/cli lint openapi.yaml
+# Project Setup
+task-master init                                    # Initialize Task Master in current project
+task-master parse-prd .taskmaster/docs/prd.txt      # Generate tasks from PRD document
+task-master models --setup                        # Configure AI models interactively
+
+# Daily Development Workflow
+task-master list                                   # Show all tasks with status
+task-master next                                   # Get next available task to work on
+task-master show <id>                             # View detailed task information (e.g., task-master show 1.2)
+task-master set-status --id=<id> --status=done    # Mark task complete
+
+# Task Management
+task-master add-task --prompt="description" --research        # Add new task with AI assistance
+task-master expand --id=<id> --research --force              # Break task into subtasks
+task-master update-task --id=<id> --prompt="changes"         # Update specific task
+task-master update --from=<id> --prompt="changes"            # Update multiple tasks from ID onwards
+task-master update-subtask --id=<id> --prompt="notes"        # Add implementation notes to subtask
+
+# Analysis & Planning
+task-master analyze-complexity --research          # Analyze task complexity
+task-master complexity-report                      # View complexity analysis
+task-master expand --all --research               # Expand all eligible tasks
+
+# Dependencies & Organization
+task-master add-dependency --id=<id> --depends-on=<id>       # Add task dependency
+task-master move --from=<id> --to=<id>                       # Reorganize task hierarchy
+task-master validate-dependencies                            # Check for dependency issues
+task-master generate                                         # Update task markdown files (usually auto-called)
 ```
 
-* Run tests with coverage:
+## Key Files & Project Structure
+
+### Core Files
+
+- `.taskmaster/tasks/tasks.json` - Main task data file (auto-managed)
+- `.taskmaster/config.json` - AI model configuration (use `task-master models` to modify)
+- `.taskmaster/docs/prd.txt` - Product Requirements Document for parsing
+- `.taskmaster/tasks/*.txt` - Individual task files (auto-generated from tasks.json)
+- `.env` - API keys for CLI usage
+
+### Claude Code Integration Files
+
+- `CLAUDE.md` - Auto-loaded context for Claude Code (this file)
+- `.claude/settings.json` - Claude Code tool allowlist and preferences
+- `.claude/commands/` - Custom slash commands for repeated workflows
+- `.mcp.json` - MCP server configuration (project-specific)
+
+### Directory Structure
+
+```
+project/
+├── .taskmaster/
+│   ├── tasks/              # Task files directory
+│   │   ├── tasks.json      # Main task database
+│   │   ├── task-1.md      # Individual task files
+│   │   └── task-2.md
+│   ├── docs/              # Documentation directory
+│   │   ├── prd.txt        # Product requirements
+│   ├── reports/           # Analysis reports directory
+│   │   └── task-complexity-report.json
+│   ├── templates/         # Template files
+│   │   └── example_prd.txt  # Example PRD template
+│   └── config.json        # AI models & settings
+├── .claude/
+│   ├── settings.json      # Claude Code configuration
+│   └── commands/         # Custom slash commands
+├── .env                  # API keys
+├── .mcp.json            # MCP configuration
+└── CLAUDE.md            # This file - auto-loaded by Claude Code
+```
+
+## MCP Integration
+
+Task Master provides an MCP server that Claude Code can connect to. Configure in `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "task-master-ai": {
+      "command": "npx",
+      "args": ["-y", "--package=task-master-ai", "task-master-ai"],
+      "env": {
+        "ANTHROPIC_API_KEY": "your_key_here",
+        "PERPLEXITY_API_KEY": "your_key_here",
+        "OPENAI_API_KEY": "OPENAI_API_KEY_HERE",
+        "GOOGLE_API_KEY": "GOOGLE_API_KEY_HERE",
+        "XAI_API_KEY": "XAI_API_KEY_HERE",
+        "OPENROUTER_API_KEY": "OPENROUTER_API_KEY_HERE",
+        "MISTRAL_API_KEY": "MISTRAL_API_KEY_HERE",
+        "AZURE_OPENAI_API_KEY": "AZURE_OPENAI_API_KEY_HERE",
+        "OLLAMA_API_KEY": "OLLAMA_API_KEY_HERE"
+      }
+    }
+  }
+}
+```
+
+### Essential MCP Tools
+
+```javascript
+help; // = shows available taskmaster commands
+// Project setup
+initialize_project; // = task-master init
+parse_prd; // = task-master parse-prd
+
+// Daily workflow
+get_tasks; // = task-master list
+next_task; // = task-master next
+get_task; // = task-master show <id>
+set_task_status; // = task-master set-status
+
+// Task management
+add_task; // = task-master add-task
+expand_task; // = task-master expand
+update_task; // = task-master update-task
+update_subtask; // = task-master update-subtask
+update; // = task-master update
+
+// Analysis
+analyze_project_complexity; // = task-master analyze-complexity
+complexity_report; // = task-master complexity-report
+```
+
+## Claude Code Workflow Integration
+
+### Standard Development Workflow
+
+#### 1. Project Initialization
 
 ```bash
-npm test --silent -- --coverage
+# Initialize Task Master
+task-master init
+
+# Create or obtain PRD, then parse it
+task-master parse-prd .taskmaster/docs/prd.txt
+
+# Analyze complexity and expand tasks
+task-master analyze-complexity --research
+task-master expand --all --research
 ```
 
-* Build and run container:
+If tasks already exist, another PRD can be parsed (with new information only!) using parse-prd with --append flag. This will add the generated tasks to the existing list of tasks..
+
+#### 2. Daily Development Loop
 
 ```bash
-docker build -t app:dev . && docker run -p 3000:3000 app:dev
+# Start each session
+task-master next                           # Find next available task
+task-master show <id>                     # Review task details
+
+# During implementation, check in code context into the tasks and subtasks
+task-master update-subtask --id=<id> --prompt="implementation notes..."
+
+# Complete tasks
+task-master set-status --id=<id> --status=done
 ```
 
-### Glossary
+#### 3. Multi-Claude Workflows
 
-* Canonical: source of truth.
-* Variant: copy via §Variants.
-* Minimal edit: smallest coherent change.
-* Full-file output: entire updated file.
-* Size-note: fallback message
+For complex projects, use multiple Claude Code sessions:
+
+```bash
+# Terminal 1: Main implementation
+cd project && claude
+
+# Terminal 2: Testing and validation
+cd project-test-worktree && claude
+
+# Terminal 3: Documentation updates
+cd project-docs-worktree && claude
+```
+
+### Custom Slash Commands
+
+Create `.claude/commands/taskmaster-next.md`:
+
+```markdown
+Find the next available Task Master task and show its details.
+
+Steps:
+
+1. Run `task-master next` to get the next task
+2. If a task is available, run `task-master show <id>` for full details
+3. Provide a summary of what needs to be implemented
+4. Suggest the first implementation step
+```
+
+Create `.claude/commands/taskmaster-complete.md`:
+
+```markdown
+Complete a Task Master task: $ARGUMENTS
+
+Steps:
+
+1. Review the current task with `task-master show $ARGUMENTS`
+2. Verify all implementation is complete
+3. Run any tests related to this task
+4. Mark as complete: `task-master set-status --id=$ARGUMENTS --status=done`
+5. Show the next available task with `task-master next`
+```
+
+## Tool Allowlist Recommendations
+
+Add to `.claude/settings.json`:
+
+```json
+{
+  "allowedTools": [
+    "Edit",
+    "Bash(task-master *)",
+    "Bash(git commit:*)",
+    "Bash(git add:*)",
+    "Bash(npm run *)",
+    "mcp__task_master_ai__*"
+  ]
+}
+```
+
+## Configuration & Setup
+
+### API Keys Required
+
+At least **one** of these API keys must be configured:
+
+- `ANTHROPIC_API_KEY` (Claude models) - **Recommended**
+- `PERPLEXITY_API_KEY` (Research features) - **Highly recommended**
+- `OPENAI_API_KEY` (GPT models)
+- `GOOGLE_API_KEY` (Gemini models)
+- `MISTRAL_API_KEY` (Mistral models)
+- `OPENROUTER_API_KEY` (Multiple models)
+- `XAI_API_KEY` (Grok models)
+
+An API key is required for any provider used across any of the 3 roles defined in the `models` command.
+
+### Model Configuration
+
+```bash
+# Interactive setup (recommended)
+task-master models --setup
+
+# Set specific models
+task-master models --set-main claude-3-5-sonnet-20241022
+task-master models --set-research perplexity-llama-3.1-sonar-large-128k-online
+task-master models --set-fallback gpt-4o-mini
+```
+
+## Task Structure & IDs
+
+### Task ID Format
+
+- Main tasks: `1`, `2`, `3`, etc.
+- Subtasks: `1.1`, `1.2`, `2.1`, etc.
+- Sub-subtasks: `1.1.1`, `1.1.2`, etc.
+
+### Task Status Values
+
+- `pending` - Ready to work on
+- `in-progress` - Currently being worked on
+- `done` - Completed and verified
+- `deferred` - Postponed
+- `cancelled` - No longer needed
+- `blocked` - Waiting on external factors
+
+### Task Fields
+
+```json
+{
+  "id": "1.2",
+  "title": "Implement user authentication",
+  "description": "Set up JWT-based auth system",
+  "status": "pending",
+  "priority": "high",
+  "dependencies": ["1.1"],
+  "details": "Use bcrypt for hashing, JWT for tokens...",
+  "testStrategy": "Unit tests for auth functions, integration tests for login flow",
+  "subtasks": []
+}
+```
+
+## Claude Code Best Practices with Task Master
+
+### Context Management
+
+- Use `/clear` between different tasks to maintain focus
+- This CLAUDE.md file is automatically loaded for context
+- Use `task-master show <id>` to pull specific task context when needed
+
+### Iterative Implementation
+
+1. `task-master show <subtask-id>` - Understand requirements
+2. Explore codebase and plan implementation
+3. `task-master update-subtask --id=<id> --prompt="detailed plan"` - Log plan
+4. `task-master set-status --id=<id> --status=in-progress` - Start work
+5. Implement code following logged plan
+6. `task-master update-subtask --id=<id> --prompt="what worked/didn't work"` - Log progress
+7. `task-master set-status --id=<id> --status=done` - Complete task
+
+### Complex Workflows with Checklists
+
+For large migrations or multi-step processes:
+
+1. Create a markdown PRD file describing the new changes: `touch task-migration-checklist.md` (prds can be .txt or .md)
+2. Use Taskmaster to parse the new prd with `task-master parse-prd --append` (also available in MCP)
+3. Use Taskmaster to expand the newly generated tasks into subtasks. Consdier using `analyze-complexity` with the correct --to and --from IDs (the new ids) to identify the ideal subtask amounts for each task. Then expand them.
+4. Work through items systematically, checking them off as completed
+5. Use `task-master update-subtask` to log progress on each task/subtask and/or updating/researching them before/during implementation if getting stuck
+
+### Git Integration
+
+Task Master works well with `gh` CLI:
+
+```bash
+# Create PR for completed task
+gh pr create --title "Complete task 1.2: User authentication" --body "Implements JWT auth system as specified in task 1.2"
+
+# Reference task in commits
+git commit -m "feat: implement JWT auth (task 1.2)"
+```
+
+### Parallel Development with Git Worktrees
+
+```bash
+# Create worktrees for parallel task development
+git worktree add ../project-auth feature/auth-system
+git worktree add ../project-api feature/api-refactor
+
+# Run Claude Code in each worktree
+cd ../project-auth && claude    # Terminal 1: Auth work
+cd ../project-api && claude     # Terminal 2: API work
+```
+
+## Troubleshooting
+
+### AI Commands Failing
+
+```bash
+# Check API keys are configured
+cat .env                           # For CLI usage
+
+# Verify model configuration
+task-master models
+
+# Test with different model
+task-master models --set-fallback gpt-4o-mini
+```
+
+### MCP Connection Issues
+
+- Check `.mcp.json` configuration
+- Verify Node.js installation
+- Use `--mcp-debug` flag when starting Claude Code
+- Use CLI as fallback if MCP unavailable
+
+### Task File Sync Issues
+
+```bash
+# Regenerate task files from tasks.json
+task-master generate
+
+# Fix dependency issues
+task-master fix-dependencies
+```
+
+DO NOT RE-INITIALIZE. That will not do anything beyond re-adding the same Taskmaster core files.
+
+## Important Notes
+
+### AI-Powered Operations
+
+These commands make AI calls and may take up to a minute:
+
+- `parse_prd` / `task-master parse-prd`
+- `analyze_project_complexity` / `task-master analyze-complexity`
+- `expand_task` / `task-master expand`
+- `expand_all` / `task-master expand --all`
+- `add_task` / `task-master add-task`
+- `update` / `task-master update`
+- `update_task` / `task-master update-task`
+- `update_subtask` / `task-master update-subtask`
+
+### File Management
+
+- Never manually edit `tasks.json` - use commands instead
+- Never manually edit `.taskmaster/config.json` - use `task-master models`
+- Task markdown files in `tasks/` are auto-generated
+- Run `task-master generate` after manual changes to tasks.json
+
+### Claude Code Session Management
+
+- Use `/clear` frequently to maintain focused context
+- Create custom slash commands for repeated Task Master workflows
+- Configure tool allowlist to streamline permissions
+- Use headless mode for automation: `claude -p "task-master next"`
+
+### Multi-Task Updates
+
+- Use `update --from=<id>` to update multiple future tasks
+- Use `update-task --id=<id>` for single task updates
+- Use `update-subtask --id=<id>` for implementation logging
+
+### Research Mode
+
+- Add `--research` flag for research-based AI enhancement
+- Requires a research model API key like Perplexity (`PERPLEXITY_API_KEY`) in environment
+- Provides more informed task creation and updates
+- Recommended for complex technical tasks
+
+---
+
+_This guide ensures Claude Code has immediate access to Task Master's essential functionality for agentic development workflows._

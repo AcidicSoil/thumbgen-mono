@@ -1,0 +1,106 @@
+Product Requirements Document (PRD)
+Title: Thumbnail Generator Webapp
+Owner: You
+Status: Draft (v1)
+Target: MVP in 1-2 sprints
+
+1. Problem & Goal
+People need a fast, simple way to create consistent thumbnails from arbitrary images without shipping their files to a random server. The goal is a browser-first tool that batch-processes images into common sizes, preserves quality, and exports ready-to-publish assets.
+
+2. Users & Use Cases
+- Creators: batch thumbnails for YouTube/Twitch covers.
+- Social teams: multiple aspect ratios per campaign.
+- Designers/engineers: one-off production tasks without Photoshop.
+Primary use cases:
+- Drag in a folder of images, choose presets, export ZIP.
+- Generate both 16:9 and 1:1 versions with the same framing.
+- Apply a naming convention and strip metadata.
+
+3. Scope
+In
+- Drag-and-drop upload; select from file picker; folder upload where supported
+- Batch resize/crop to presets and custom sizes
+- Crop modes: cover, contain, fit, fill, letterbox
+- Quality slider; format: JPG/PNG/WebP
+- EXIF orientation fix, optional strip metadata
+- File naming tokens and ZIP export
+- Local-only processing by default
+Out
+- Heavy editing (layers, masks)
+- Cloud storage sync (MVP)
+- Multi-user accounts/permissions
+
+4. Non-Goals
+- Replace full image editors
+- Video thumbnails from video frames (future)
+- Mobile native apps (PWA is sufficient for now)
+
+5. Functional Requirements
+FR1 Upload images (drag, click, or paste)
+- Accept JPG, PNG, WebP; max 200 MB per file (configurable)
+- Show file list with size, status, and preview
+FR2 Choose presets
+- 16:9 (1920x1080,1280x720,640x360,320x180), 1:1 (1024,512,256), 4:5 (1080x1350), 3:4 (1500x2000)
+- Custom width/height; lock aspect ratio
+FR3 Crop behavior
+- Options: cover, contain, fit, fill, letterbox; focal point picker
+- Optional smart-crop (face/subject) toggle
+FR4 Output settings
+- Format: JPG, PNG, WebP; Quality: 1-100
+- Strip metadata toggle
+- Naming pattern with tokens: {basename},{width},{height},{ext},{index}
+FR5 Processing
+- Parallel workers; cancel/pause; progress per file and overall
+- Error handling (unsupported file, corrupted image, memory limits)
+FR6 Export
+- Download individually or as ZIP; preserve folder tree optionally
+FR7 Accessibility
+- Keyboard operable, visible focus, ARIA labels, screen-reader announcements
+
+6. Non-Functional Requirements
+- Performance: 200 images processed under 2 minutes on a modern desktop for 1280x720 targets (approx; dependent on input sizes)
+- Responsiveness: UI remains interactive; main thread work offloaded to workers
+- Privacy: no network transfer in client-only mode
+- Reliability: recoverable from partial failures; show retry affordances
+- Browser support: Last 2 versions of Chromium/Firefox/Safari; graceful degradation without OffscreenCanvas
+
+7. UX Flow (MVP)
+1) User lands on page -> sees drop zone and preset selector
+2) Drops files/folder -> file list populates with thumbnails
+3) Chooses presets and output options
+4) Clicks "Generate" -> progress bars per file; overall status
+5) Completion -> "Download ZIP" + per-file download buttons
+
+8. System Design (Client-only)
+- UI: Next.js/React/Tailwind
+- Worker: performs decode, scale, crop, encode
+- Libraries: exifr (EXIF), pica (resampling), jszip (zip), file-saver (download)
+- Data model: FileItem { id, name, size, previewURL, status, outputs[] }
+- Settings persisted in localStorage
+- Optional server mode: Next API routes for chunked upload and headless rendering (behind feature flag)
+
+9. Metrics / Telemetry (self-hosted only)
+- Time to first render, time to first processed image
+- Success/failure counts, average processing time per file
+- No image content analytics; only anonymous usage if enabled
+
+10. Risks & Mitigations
+- Large images cause memory pressure -> process sequentially; cap concurrency; stream encode if available
+- EXIF surprises -> auto-rotate and test sample sets
+- Browser differences -> feature-detect OffscreenCanvas and fall back to Canvas
+- User drops PSD/SVG -> validate MIME and show clear error
+
+11. Rollout Plan
+- v0: Internal dogfood with 100-500 images
+- v1: Public MVP, docs and examples
+- v1.1: Smart-crop, overlay templates, Drive import
+
+12. Acceptance Criteria (MVP)
+- Given a folder of 100 mixed JPG/PNG images, when user selects 1280x720 and 1:1 512x512, then the app generates both sizes for each input and provides a single ZIP with properly named files.
+- RTL and keyboard navigation verified on key flows (upload, select, generate, download).
+- Processing happens locally with network disabled.
+
+13. Open Questions
+- Should we include template overlays (logo/text) in MVP?
+- Do we need SVG input rasterization?
+- Do we add Google Drive import in v1 or v1.1?
